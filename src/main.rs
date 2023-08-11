@@ -207,10 +207,10 @@ async fn start_docker() -> bool {
     }
 
     // 判断 docker images 是否能执行成功，如果能执行成功就返回 true
-    // if let Err(err) = crate::docker::container_exists("_test_docker_").await {
-    //     info!("{}", err);
-    //     return false;
-    // }
+    if let Err(err) = crate::docker::container_exists("_test_docker_").await {
+        info!("{}", err);
+        return false;
+    }
 
     success("start_docker");
     return true;
