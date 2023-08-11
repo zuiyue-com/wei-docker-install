@@ -1,0 +1,21 @@
+[package]
+name = "wei-docker-install"
+version = "0.2.0"
+edition = "2021"
+
+description = "wei docker install"
+documentation = "https://github.com/zuiyue-com/wei-log"
+homepage = "https://github.com/zuiyue-com/wei-log"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+wei-log = "0.2.0"
+wei-env = "0.1.0"
+dirs = "5.0.1"
+winapi = { version = "0.3", features = ["winuser", "handleapi", "libloaderapi", "winbase", "securitybaseapi", "shellapi", "tlhelp32", "consoleapi", "wincon", "processenv"] }
+colored = "2.0.0"
+encoding_rs = "0.8.32"
+sysinfo = "0.29.0"
+serde_json = "1.0.96"
+winreg = "0.50.0"
+mslnk = "0.1.8"
