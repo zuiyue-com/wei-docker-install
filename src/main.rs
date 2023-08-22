@@ -36,11 +36,8 @@ extern crate wei_log;
 // 在install/windows.rs里面只需要引入 use crate::info即可
 // use crate::info;
 
-fn main() {
-    println!("Hello, World");
-}
-
-pub async fn init() {
+#[tokio::main]
+pub async fn main() {
 
     // 编写 daemon.exe 守护进程，做为开机启动，接收到退出信息之后也跟着退出，
     // 根据 AppData\\Local\\Ai 里面的文件 start.dat 里面的值如果为1代表开启，daemon.exe会一起打开程序，如果为 0 代表关闭
