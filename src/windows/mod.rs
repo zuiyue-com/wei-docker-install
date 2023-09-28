@@ -61,7 +61,11 @@ fn wsl_update() {
     let (data, _, _) = encoding_rs::UTF_16LE.decode(&bytes);
     fs::remove_file("out.txt").unwrap();
 
-    if data.contains("成功地完成了配置") || data.contains("已重新配置产品") {
+    if data.contains("成功地完成了配置") || 
+       data.contains("已重新配置产品") ||
+       data.contains("安装成功") ||
+       data.contains("成功")   
+    {
         success("wsl_update");
     } else {
         failed(&data);
