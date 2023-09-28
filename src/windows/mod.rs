@@ -53,7 +53,7 @@ fn first_reboot() {
 fn wsl_update() {
     info!("更新wsl_update:");
 
-    shell("msiexec -i ./docker/wsl_update.msi /quiet /l out.txt");
+    shell("msiexec -i docker\\wsl_update.msi /quiet /l out.txt");
 
     let mut file = File::open("out.txt").unwrap();
     let mut bytes = Vec::new();
