@@ -10,7 +10,7 @@ license = "MIT OR Apache-2.0"
 
 [dependencies]
 wei-log = "0.2.5"
-wei-env = "0.2.4"
+wei-env = "0.2.11"
 dirs = "5.0.1"
 tokio = { version = "1", features =["full"] }
 winapi = { version = "0.3", features = ["winuser", "handleapi", "libloaderapi", "winbase", "securitybaseapi", "shellapi", "tlhelp32", "consoleapi", "wincon", "processenv"] }
