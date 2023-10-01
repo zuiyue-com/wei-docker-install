@@ -25,9 +25,9 @@ pub fn install() {
         ubuntu();
     }
 
-    if !read_json("docker") {
-        docker();        
-    }
+    // if !read_json("docker") {
+    //     docker();        
+    // }
 }
 
 
@@ -296,10 +296,11 @@ pub fn relaunch_elevated() -> bool {
 fn ubuntu() {
     info!("正在安装ubuntu:");
     
-    shell("wsl --unregister Ubuntu");
+    shell("wsl --shutdown");
+    shell("wsl --unregister wei-ubuntu");
+    shell("wsl --import wei-ubuntu docker/wei-ubuntu docker/Ubuntu.tar.gz --version 2")
 
-    let _ = shell(&format!("mkdir ./docker/ubuntu/"));
-    let data = shell(&format!("tar -xvf ./docker/ubuntu.tar -C ./docker/ubuntu/"));
+    let data = shell("wsl -l -v");
     info!(" {}", data);
     // 请启用虚拟机平台 Windows 功能并确保在 BIOS 中启用虚拟化。有关信息，请访问 https://aka.ms/wsl2-install
     if data.contains("请启用虚拟机平台") {
@@ -307,22 +308,16 @@ fn ubuntu() {
         failed("请重启电脑进入bios, 开启Virtualization Technology（虚拟化技术）, 或者参考网站教程：https://www.zuiyue.com/helpdoc.html");
     }
 
-    if data == "" {
-        let ubuntu_exe = format!("./docker/ubuntu/ubuntu.exe");
-        let output = Command::new("powershell")
-        .args(&["/C", "start", "-wait", &format!("{}", ubuntu_exe)])
-        .output().unwrap();
-        
-        if output.status.success() {
-            success("ubuntu");
-        } else {
-            failed(&data);
-        }
+    if data.contains("wei-ubuntu") {
+        shell("wsl --set-default wei-ubuntu");
+        success("ubuntu");
     }
+
+    failed(&data);
 }
 
 
-fn docker() {
+fn _docker() {
     info!(" 正在安装docker:");
 
     shell("wsl --unregister docker-desktop-data");
