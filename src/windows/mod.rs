@@ -5,6 +5,10 @@ use std::process::Command;
 pub fn install() {
     admin();
 
+    if !read_json("hyper") {
+        hyper();
+    }
+
     if !read_json("wsl") {
         wsl();
     }
@@ -24,12 +28,64 @@ pub fn install() {
     if !read_json("ubuntu") {
         ubuntu();
     }
-
-    // if !read_json("docker") {
-    //     docker();        
-    // }
 }
 
+pub fn check() -> f32 {
+    // 检查是否安装了wsl2
+    // 检查是否安装了ubuntu
+    // 检查是否安装了docker
+    // 检查是否安装了docker-compose
+
+    let mut count_success = 0;
+    let mut count_all = 0;
+
+    count_all += 1;
+    if read_json("hyper") {
+        count_success += 1;
+    }
+
+    count_all += 1;
+    if read_json("wsl") {
+        count_success += 1;
+    }
+
+    count_all += 1;
+    if read_json("first_reboot") {
+        count_success += 1;
+    }
+
+    count_all += 1;
+    if read_json("wsl2") {
+        count_success += 1;
+    }
+
+    count_all += 1;
+    if read_json("wsl_update") {
+        count_success += 1;
+    }
+
+    count_all += 1;
+    if read_json("ubuntu") {
+        count_success += 1;
+    }
+
+    count_success as f32 / count_all as f32
+}
+
+fn hyper() {
+    info!("设置hyper");
+
+    let output = Command::new("powershell")
+    .arg("bcdedit /set hypervisorlaunchtype auto").output().unwrap();
+    let (output_str, _, _) = encoding_rs::GB18030.decode(&output.stdout);
+    let data = output_str.to_string();
+
+    info!(" {}", data);
+    if !data.contains("操作成功完成") {
+        failed("403");
+    }
+    success("hyper");
+}
 
 fn wsl2() {
     info!(" 设置默认wsl2:");
@@ -192,9 +248,9 @@ fn success(data: &str) {
 }
 
 fn failed(err: &str) {
-    let data = format!("失败，原因：{}，10秒后退出...",err);
+    let data = format!("失败，原因：{}",err);
     info!(" {}", data);
-    thread::sleep(Duration::from_secs(10));
+    // thread::sleep(Duration::from_secs(10));
     std::process::exit(1);
 }
 
@@ -298,7 +354,7 @@ fn ubuntu() {
     
     shell("wsl --shutdown");
     shell("wsl --unregister wei-ubuntu");
-    shell("wsl --import wei-ubuntu docker/wei-ubuntu docker/Ubuntu.tar.gz --version 2")
+    shell("wsl --import wei-ubuntu docker/wei-ubuntu docker/Ubuntu.tar.gz --version 2");
 
     let data = shell("wsl -l -v");
     info!(" {}", data);
