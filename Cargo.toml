@@ -10,7 +10,7 @@ license = "MIT OR Apache-2.0"
 
 [dependencies]
 wei-log = "0.2.8"
-wei-env = "0.2.11"
+wei-env = "0.2.13"
 dirs = "5.0.1"
 winapi = { version = "0.3", features = ["winuser", "handleapi", "libloaderapi", "winbase", "securitybaseapi", "shellapi", "tlhelp32", "consoleapi", "wincon", "processenv"] }
 encoding_rs = "0.8.32"
