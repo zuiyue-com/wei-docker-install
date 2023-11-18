@@ -9,7 +9,7 @@ pub fn install() {
     windows::install();
 }
 
-pub fn check() -> f32 {
+pub fn check() -> serde_json::Value {
     #[cfg(target_os = "windows")]
-    return windows::check();
+    return serde_json::from_str(&windows::docker_dat()).unwrap();
 }

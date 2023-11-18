@@ -2,8 +2,22 @@ use std::thread;
 use std::time::Duration;
 use std::process::Command;
 
+// 安装进度说明：
+// file_check: 检查是否下载Ubuntu.tar.gz和wsl_update_x64.msi
+// hyper: 设置 bcdedit /set hypervisorlaunchtype auto
+// wsl: 设置 dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart
+// first_reboot: 设置完上面的需要重启电脑
+// wsl2: 设置 wsl 默认为版本 2 
+// wsl_update: 安装 wsl_update_x64.msi
+// ubuntu: 安装 ubuntu.tar.gz
+
 pub fn install() {
     admin();
+
+    // 检查文件是否齐全
+    if !read_json("file_check") {
+        file_check();
+    }
 
     if !read_json("hyper") {
         hyper();
@@ -30,46 +44,22 @@ pub fn install() {
     }
 }
 
-pub fn check() -> f32 {
-    // 检查是否安装了wsl2
-    // 检查是否安装了ubuntu
-    // 检查是否安装了docker
-    // 检查是否安装了docker-compose
+pub fn file_check() {
+    info!("检测文件完整");
 
-    let mut count_success = 0;
-    let mut count_all = 0;
-
-    count_all += 1;
-    if read_json("hyper") {
-        count_success += 1;
+    if !Path::new(
+        &format!("{}/docker/Ubuntu.tar.gz", std::env::current_dir().unwrap().display())
+    ).exists() {
+        failed("file_check", "请先下载Ubuntu.tar.gz");
     }
 
-    count_all += 1;
-    if read_json("wsl") {
-        count_success += 1;
+    if !Path::new(
+        &format!("{}/docker/wsl_update_x64.msi", std::env::current_dir().unwrap().display())
+    ).exists() {
+        failed("file_check", "请先下载wsl_update_x64.msi");
     }
-
-    count_all += 1;
-    if read_json("first_reboot") {
-        count_success += 1;
-    }
-
-    count_all += 1;
-    if read_json("wsl2") {
-        count_success += 1;
-    }
-
-    count_all += 1;
-    if read_json("wsl_update") {
-        count_success += 1;
-    }
-
-    count_all += 1;
-    if read_json("ubuntu") {
-        count_success += 1;
-    }
-
-    count_success as f32 / count_all as f32
+    
+    success("file_check");
 }
 
 fn hyper() {
@@ -82,7 +72,7 @@ fn hyper() {
 
     info!(" {}", data);
     if !data.contains("操作成功完成") {
-        failed("403");
+        failed("hyper", "403");
     }
     success("hyper");
 }
@@ -91,7 +81,7 @@ fn wsl2() {
     info!(" 设置默认wsl2:");
     let data = shell("wsl --set-default-version 2");
     if !data.contains("操作成功完成") {
-        failed("403");
+        failed("wsl2", "403");
     }
     success("wsl2");
 }
@@ -101,7 +91,7 @@ fn first_reboot() {
     
     match Command::new("shutdown").arg("/r").arg("/t").arg("5").spawn() {
         Ok(_) => {success("first_reboot");},
-        Err(err) => {failed(&err.to_string());},
+        Err(err) => {failed("first_reboot", &err.to_string());},
     };
 }
 
@@ -109,7 +99,7 @@ fn first_reboot() {
 fn wsl_update() {
     info!("更新wsl_update:");
 
-    shell("msiexec -i docker\\wsl_update.msi /quiet /l out.txt");
+    shell("msiexec -i docker\\wsl_update_x64.msi /quiet /l out.txt");
 
     let mut file = File::open("out.txt").unwrap();
     let mut bytes = Vec::new();
@@ -124,7 +114,7 @@ fn wsl_update() {
     {
         success("wsl_update");
     } else {
-        failed(&data);
+        failed("wsl_update", &data);
     }
 }
 
@@ -140,7 +130,7 @@ fn wsl() {
     info!(" {}", data);
 
     if !data.contains("100.0%") {
-        failed(&data);
+        failed("wsl", &data);
     }
 
     let output = Command::new("powershell")
@@ -151,12 +141,43 @@ fn wsl() {
     info!(" {}", data);
     
     if !data.contains("100.0%") {
-        failed(&data);
+        failed("wsl", &data);
     }
 
     success("wsl");
 }
 
+pub fn docker_dat() -> String {
+    let home_dir = wei_env::home_dir().unwrap();
+
+    // 创建 AppData\\Local\\Ai 文件夹
+    let dir_path = Path::new(&home_dir);
+    fs::create_dir_all(&dir_path).unwrap();
+
+    // 拼接文件路径
+    let file_path = dir_path.join("docker.dat");
+
+    // 如果文件不存在，就创建文件
+    OpenOptions::new()
+        .write(true)
+        .create(true)
+        .open(&file_path).unwrap();
+
+    // 读取文件内容
+    let mut content = read_to_string(&file_path).unwrap();
+
+    // 如果文件内容为空，就创建一个默认的 json
+    if content.is_empty() {
+        let default_json = r#"{"key": "value"}"#;
+        let mut file = OpenOptions::new()
+            .write(true)
+            .open(&file_path).unwrap();
+        file.write_all(default_json.as_bytes()).unwrap();
+        content = default_json.to_string();
+    } 
+
+    content
+}
 
 use serde_json::{json};
 fn write_json(key: &str, value: bool) {
@@ -247,10 +268,10 @@ fn success(data: &str) {
     info!(" {}", "成功");
 }
 
-fn failed(err: &str) {
+fn failed(data: &str, err: &str) {
+    write_json(data, false);
     let data = format!("失败，原因：{}",err);
     info!(" {}", data);
-    // thread::sleep(Duration::from_secs(10));
     std::process::exit(1);
 }
 
@@ -361,15 +382,16 @@ fn ubuntu() {
     // 请启用虚拟机平台 Windows 功能并确保在 BIOS 中启用虚拟化。有关信息，请访问 https://aka.ms/wsl2-install
     if data.contains("请启用虚拟机平台") {
         message("提示", "请重启电脑进入bios, 开启Virtualization Technology（虚拟化技术）");
-        failed("请重启电脑进入bios, 开启Virtualization Technology（虚拟化技术）, 或者参考网站教程：https://www.zuiyue.com/helpdoc.html");
+        failed("ubuntu", "请重启电脑进入bios, 开启Virtualization Technology（虚拟化技术）, 或者参考网站教程：https://www.zuiyue.com/helpdoc.html");
     }
 
     if data.contains("wei-ubuntu") {
         shell("wsl --set-default wei-ubuntu");
         success("ubuntu");
+        return;
     }
 
-    failed(&data);
+    failed("ubuntu", &data);
 }
 
 
@@ -424,7 +446,7 @@ fn _docker() {
     if res == "" {
         success("docker");
     } else {
-        failed(&res);
+        failed("docker", &res);
     }
 }
 
