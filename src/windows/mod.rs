@@ -44,6 +44,13 @@ pub fn install() {
     }
 }
 
+pub fn uninstall() {
+    clear_json();
+
+    shell("wsl --shutdown");
+    shell("wsl --unregister wei-ubuntu");
+}
+
 pub fn file_check() {
     info!("检测文件完整");
 
@@ -177,6 +184,23 @@ pub fn docker_dat() -> String {
     } 
 
     content
+}
+
+fn clear_json() {
+    // 获取 home 目录
+    let home_dir = wei_env::home_dir().unwrap();
+
+    let dir_path = Path::new(&home_dir);
+    fs::create_dir_all(&dir_path).unwrap();
+
+    // 拼接文件路径
+    let file_path = dir_path.join("docker.dat");
+
+    if !file_path.exists() {
+        return;
+    }
+
+    std::fs::remove_file(&file_path).unwrap();
 }
 
 use serde_json::{json};
