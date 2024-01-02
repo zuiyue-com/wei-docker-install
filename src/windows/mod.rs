@@ -186,22 +186,22 @@ pub fn docker_dat() -> String {
     content
 }
 
-fn clear_json() {
-    // 获取 home 目录
-    let home_dir = wei_env::home_dir().unwrap();
+// fn clear_json() {
+//     // 获取 home 目录
+//     let home_dir = wei_env::home_dir().unwrap();
 
-    let dir_path = Path::new(&home_dir);
-    fs::create_dir_all(&dir_path).unwrap();
+//     let dir_path = Path::new(&home_dir);
+//     fs::create_dir_all(&dir_path).unwrap();
 
-    // 拼接文件路径
-    let file_path = dir_path.join("docker.dat");
+//     // 拼接文件路径
+//     let file_path = dir_path.join("docker.dat");
 
-    if !file_path.exists() {
-        return;
-    }
+//     if !file_path.exists() {
+//         return;
+//     }
 
-    std::fs::remove_file(&file_path).unwrap();
-}
+//     std::fs::remove_file(&file_path).unwrap();
+// }
 
 use serde_json::{json};
 fn write_json(key: &str, value: bool) {
@@ -296,6 +296,10 @@ fn failed(data: &str, err: &str) {
     write_json(data, false);
     let data = format!("失败，原因：{}",err);
     info!(" {}", data);
+    print!("{}",serde_json::json!({
+        "code": 400,
+        "message": data
+    }));
     std::process::exit(1);
 }
 
