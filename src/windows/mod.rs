@@ -45,7 +45,7 @@ pub fn install() {
 }
 
 pub fn uninstall() {
-    clear_json();
+    write_json("ubuntu", false);
 
     shell("wsl --shutdown");
     shell("wsl --unregister wei-ubuntu");
