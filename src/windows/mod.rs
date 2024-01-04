@@ -53,21 +53,31 @@ pub fn uninstall() {
     shell("wsl --unregister wei-ubuntu");
 }
 
+pub fn file_check_bool() -> bool {
+    if !std::path::Path::new(
+        &format!("{}/docker/Ubuntu.tar.gz", std::env::current_dir().unwrap().display())
+    ).exists() {
+        info!("Ubuntu.tar.gz not found in {}", &format!("{}/docker/Ubuntu.tar.gz", std::env::current_dir().unwrap().display()));
+        return false;
+    }
+
+    if !std::path::Path::new(
+        &format!("{}/docker/wsl_update_x64.msi", std::env::current_dir().unwrap().display())
+    ).exists() {
+        info!("wsl_update_x64.msi not found in {}", &format!("{}/docker/wsl_update_x64.msi", std::env::current_dir().unwrap().display()));
+        return false;
+    }
+
+    return true;
+}
+
 pub fn file_check() {
     info!("检测文件完整");
 
-    if !Path::new(
-        &format!("{}/docker/Ubuntu.tar.gz", std::env::current_dir().unwrap().display())
-    ).exists() {
-        failed("file_check", "请先下载Ubuntu.tar.gz");
+    if file_check_bool() == false {
+        failed("file_check", "请先下载Ubuntu.tar.gz和wsl_update_x64.msi");
     }
 
-    if !Path::new(
-        &format!("{}/docker/wsl_update_x64.msi", std::env::current_dir().unwrap().display())
-    ).exists() {
-        failed("file_check", "请先下载wsl_update_x64.msi");
-    }
-    
     success("file_check");
 }
 
