@@ -14,6 +14,8 @@ use std::process::Command;
 pub fn install() {
     admin();
 
+    println!("正在安装docker");
+
     // 检查文件是否齐全
     if !read_json("file_check") {
         file_check();
@@ -204,7 +206,7 @@ pub fn docker_dat() -> String {
 // }
 
 use serde_json::{json};
-fn write_json(key: &str, value: bool) {
+pub fn write_json(key: &str, value: bool) {
     // 获取 home 目录
     let home_dir = wei_env::home_dir().unwrap();
 
