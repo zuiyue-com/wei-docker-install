@@ -12,20 +12,32 @@ use std::process::Command;
 // ubuntu: 安装 ubuntu.tar.gz
 
 pub fn install() {
-    admin();
-
-    println!("正在安装docker");
 
     // 检查文件是否齐全
     if !read_json("file_check") {
         file_check();
     }
 
-    if !read_json("hyper") {
-        hyper();
-    }
+    // 判断是否有安装 wsl,而且版本设置为wsl 2,如果有则不需要执行下面的函数
+    // hyper, wsl, first_reboot, wsl2
+    match wei_run::command("wsl", vec!["--status"]) {
+        Ok(data) => {
+            if data.contains("默认版本：2") || 
+               data.contains("Default Version: 2") ||
+               data.contains("内核版本") ||
+               data.contains("Kernel Version") {
+                success("hyper");
+                success("wsl");
+                success("first_reboot");
+                success("wsl2");
+            }
+        },
+        Err(_) => {},
+    };
 
-    if !read_json("wsl") {
+    if !read_json("hyper") || !read_json("wsl") { // 需要管理员身份
+        admin();
+        hyper();
         wsl();
     }
 
@@ -33,7 +45,7 @@ pub fn install() {
         first_reboot();
     }
 
-    if !read_json("wsl2") {
+    if !read_json("wsl2") { // 无需管理员身份
         wsl2();
     }
 
@@ -83,6 +95,8 @@ pub fn file_check() {
 
 fn hyper() {
     info!("设置hyper");
+
+    // 此处先判断bcedit里面是否包含 hypervisorlaunchtype
 
     let output = Command::new("powershell")
     .arg("bcdedit /set hypervisorlaunchtype auto").output().unwrap();
