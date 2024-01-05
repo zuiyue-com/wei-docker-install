@@ -14,27 +14,28 @@ use std::process::Command;
 pub fn install() {
 
     // 检查文件是否齐全
+    info!("检查文件完整");
     if !read_json("file_check") {
         file_check();
     }
 
     // 判断是否有安装 wsl,而且版本设置为wsl 2,如果有则不需要执行下面的函数
     // hyper, wsl, first_reboot, wsl2
-    match wei_run::command("wsl", vec!["--status"]) {
-        Ok(data) => {
-            if data.contains("默认版本：2") || 
-               data.contains("Default Version: 2") ||
-               data.contains("内核版本") ||
-               data.contains("Kernel Version") {
-                success("hyper");
-                success("wsl");
-                success("first_reboot");
-                success("wsl2");
-            }
-        },
-        Err(_) => {},
-    };
+    info!("检查是否已经安装过docker");
+    let data = shell("wsl --status");
+    info!("data: {}", data);
+    if data.contains("默认版本：2") || 
+        data.contains("Default Version: 2") ||
+        data.contains("内核版本") ||
+        data.contains("Kernel Version") {
+        success("hyper");
+        success("wsl");
+        success("first_reboot");
+        success("wsl2");
+    }
 
+    // 判断是否有安装 wsl_update_x64.msi,如果有则不需要执行下面的函数
+    info!("检查是否已经安装hyper 和 wsl");
     if !read_json("hyper") || !read_json("wsl") { // 需要管理员身份
         admin();
         hyper();
@@ -45,14 +46,17 @@ pub fn install() {
         first_reboot();
     }
 
+    info!("检查是否已经安装wsl2");
     if !read_json("wsl2") { // 无需管理员身份
         wsl2();
     }
 
+    info!("检查是否已经安装wsl_update_x64.msi");
     if !read_json("wsl_update") {
         wsl_update();
     }
 
+    info!("检查是否已经安装ubuntu");
     if !read_json("ubuntu") {
         ubuntu();
     }
@@ -275,28 +279,33 @@ use std::path::Path;
 use serde_json::Value;
 use std::io::prelude::*;
 fn read_json(key: &str) -> bool {
-     // 获取 home 目录
-     let home_dir = wei_env::home_dir().unwrap();
+    // 获取 home 目录
+    let home_dir = wei_env::home_dir().unwrap();
 
-     // 创建 AppData\\Local\\Ai 文件夹
-     let dir_path = Path::new(&home_dir);
-     fs::create_dir_all(&dir_path).unwrap();
+    // 创建 AppData\\Local\\Ai 文件夹
+    let dir_path = Path::new(&home_dir);
+    fs::create_dir_all(&dir_path).unwrap();
  
-     // 拼接文件路径
-     let file_path = dir_path.join("docker.dat");
+    // 拼接文件路径
+    let file_path = dir_path.join("docker.dat");
  
-     // 如果文件不存在，就创建文件
-     OpenOptions::new()
-         .write(true)
-         .create(true)
-         .open(&file_path).unwrap();
+    let path = std::path::Path::new(&file_path);
+    if !path.exists() {
+        match std::fs::File::create(&path) {
+            Ok(_) => {},
+            Err(err) => {
+                info!("创建文件失败: {}", err);
+                return false;
+            },
+        };
+    }
  
      // 读取文件内容
      let content = read_to_string(&file_path).unwrap();
  
      // 如果文件内容为空，就创建一个默认的 json
      if content.is_empty() {
-         let default_json = r#"{"key": "value"}"#;
+         let default_json = r#"{"default": true}"#;
          let mut file = OpenOptions::new()
              .write(true)
              .open(&file_path).unwrap();
@@ -304,7 +313,13 @@ fn read_json(key: &str) -> bool {
      } 
  
      // 解析 JSON
-     let data: Value = serde_json::from_str(&content).unwrap();
+     let data: Value = match serde_json::from_str(&content) {
+            Ok(data) => data,
+            Err(err) => {
+                info!("解析json失败: {}", err);
+                return false;
+            },
+     };
  
      // 检查是否存在关键字，并且其值是否为 true
      let data = data.get(key).and_then(Value::as_bool).unwrap_or(false);
